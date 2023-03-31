@@ -4,6 +4,7 @@ using Weather.DAL.Interfaces;
 using Weather.DAL.Repositories;
 using Weather.Services.Implements;
 using Weather.Services.Interfaces;
+using Weather.Models;
 
 namespace Weather.Properties
 {
@@ -28,6 +29,12 @@ namespace Weather.Properties
             builder.Services.AddScoped<IOpenWeatherService, OpenWeatherService>();
             builder.Services.AddScoped<IHttpClientService, HttpClientService>();
             builder.Services.AddScoped<IForecastUserService, ForecastUserService>();
+        }
+
+        public static void InitConfigs(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddOptions();
+            builder.Services.Configure<ApiKeys>(builder.Configuration.GetSection("ApiKeys"));
         }
     }
 }
