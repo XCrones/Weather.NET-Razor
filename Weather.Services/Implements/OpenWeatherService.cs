@@ -9,7 +9,6 @@ namespace Weather.Services.Implements
     public class OpenWeatherService : IOpenWeatherService
     {
         private readonly IHttpClientService _httpClientService;
-        private readonly string _apiKey = "YOUR_API_KEY";
         private readonly string _urlApi = "https://api.openweathermap.org/data/2.5";
 
         public OpenWeatherService(IHttpClientService httpClientService)
@@ -17,17 +16,17 @@ namespace Weather.Services.Implements
             _httpClientService = httpClientService;
         }
 
-        private async Task<ForecastViewModel?> FetchForecast(string queries)
+        private async Task<ForecastViewModel?> FetchForecast(string queries, string _apiKey)
         {
             var result = await _httpClientService.Get<ForecastViewModel?>($"{_urlApi}/forecast/?{queries}&units=metric&appid={_apiKey}");
             return result;
         }
 
-        public async Task<IDefaultResponse<ForecastViewModel>> FetchByGeo(SearchForecastByGeoViewModel model)
+        public async Task<IDefaultResponse<ForecastViewModel>> FetchByGeo(SearchForecastByGeoViewModel model, string _apiKey)
         {
             try
             {
-                var response = await FetchForecast($"lat={model.Lat}&lon={model.Lon}");
+                var response = await FetchForecast($"lat={model.Lat}&lon={model.Lon}", _apiKey);
 
                 if (response != null && response.cod == "200")
                 {
@@ -54,11 +53,11 @@ namespace Weather.Services.Implements
             }
         }
 
-        public async Task<IDefaultResponse<ForecastViewModel>> FetchByName(SearchForecastByNameViewModel model)
+        public async Task<IDefaultResponse<ForecastViewModel>> FetchByName(SearchForecastByNameViewModel model, string _apiKey)
         {
             try
             {
-                var response = await FetchForecast($"q={model.CityName}");
+                var response = await FetchForecast($"q={model.CityName}", _apiKey);
 
                 if (response != null && response.cod == "200")
                 {

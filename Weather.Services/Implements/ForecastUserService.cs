@@ -185,7 +185,7 @@ namespace Weather.Services.Implements
             }
         }
 
-        public async Task<IDefaultResponse<CityWeather>> SearchByCityCoord(int UId, SearchForecastByGeoViewModel model)
+        public async Task<IDefaultResponse<CityWeather>> SearchByCityCoord(int UId, SearchForecastByGeoViewModel model, string _apiKey)
         {
             try
             {
@@ -218,7 +218,7 @@ namespace Weather.Services.Implements
                     }
                 }
 
-                var fetchForecast = await _openWeatherService.FetchByGeo(model);
+                var fetchForecast = await _openWeatherService.FetchByGeo(model, _apiKey);
                 return await CreateOrUpdateForecast(fetchForecast);
             }
             catch (Exception ex)
@@ -231,7 +231,7 @@ namespace Weather.Services.Implements
             }
         }
 
-        public async Task<IDefaultResponse<CityWeather>> SearchByCityName(int UId, SearchForecastByNameViewModel model)
+        public async Task<IDefaultResponse<CityWeather>> SearchByCityName(int UId, SearchForecastByNameViewModel model, string _apiKey)
         {
             try
             {
@@ -264,7 +264,7 @@ namespace Weather.Services.Implements
                     }
                 }
 
-                var fetchForecast = await _openWeatherService.FetchByName(model);
+                var fetchForecast = await _openWeatherService.FetchByName(model, _apiKey);
                 return await CreateOrUpdateForecast(fetchForecast);
             }
             catch (Exception ex)
