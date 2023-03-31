@@ -22,12 +22,12 @@ namespace Weather.Services.Implements
 
         private async Task<User?> SearchUniqEmail(string Email)
         {
-            return await _repository.Read().FirstOrDefaultAsync(item => item.Email == Email);
+            return await _repository.Read().FirstOrDefaultAsync(x => x.Email == Email);
         }
 
         private async Task<User?> SearchByUId(int UId)
         {
-            return await _repository.Read().FirstOrDefaultAsync(item => item.UId == UId && item.DeleteAt == null);
+            return await _repository.Read().FirstOrDefaultAsync(x => x.UId == UId && x.DeleteAt == null);
         }
 
         public async Task<IDefaultResponse<User>> CreateItem(SignupViewModel model)
@@ -145,7 +145,7 @@ namespace Weather.Services.Implements
         {
             try
             {
-                var itemResponse = await _repository.Read().FirstOrDefaultAsync(item => item.UId == UId && item.DeleteAt != null);
+                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.UId == UId && x.DeleteAt != null);
 
                 if (itemResponse == null)
                 {
@@ -241,7 +241,7 @@ namespace Weather.Services.Implements
         {
             try
             {
-                var itemResponse = await _repository.Read().FirstOrDefaultAsync(item => item.Email == model.Email && item.DeleteAt == null);
+                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.Email == model.Email && x.DeleteAt == null);
 
                 if (itemResponse != null)
                 {
