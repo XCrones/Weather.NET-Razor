@@ -21,7 +21,7 @@ namespace Weather.Services.Implements
 
         private async Task<Forecast?> GetForecastById(int id)
         {
-            return await _repository.Read().FirstOrDefaultAsync(item => item.city.id == id && item.DeleteAt != null);
+            return await _repository.Read().FirstOrDefaultAsync(x => x.Id == id && x.DeleteAt != null);
         }
 
         public async Task<IDefaultResponse<Forecast>> CreateItem(ForecastViewModel model)
@@ -127,7 +127,7 @@ namespace Weather.Services.Implements
         {
             try
             {
-                var itemResponse = await _repository.Read().FirstOrDefaultAsync(item => item.DeleteAt != null);
+                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.DeleteAt != null);
 
                 if (itemResponse == null)
                 {
@@ -200,6 +200,102 @@ namespace Weather.Services.Implements
                 return new DefaultResponse<Forecast>()
                 {
                     Message = $"[UpdateItem] : {ex.Message}",
+                    HttpCode = HttpStatusCode.InternalServerError,
+                };
+            }
+        }
+
+        public async Task<IDefaultResponse<Forecast>> GetItemByCityName(SearchForecastByNameViewModel model)
+        {
+            try
+            {
+                var subName = model.CityName.Substring(1).ToLower();
+                var nameCapitalize = $"{char.ToUpper(model.CityName[0])}{subName}";
+
+                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.city.name == nameCapitalize && x.DeleteAt != null);
+
+                if (itemResponse == null)
+                {
+                    return new DefaultResponse<Forecast>()
+                    {
+                        HttpCode = HttpStatusCode.NotFound,
+                        Message = DefaultMessage.NotFound,
+                    };
+                }
+
+                return new DefaultResponse<Forecast>()
+                {
+                    HttpCode = HttpStatusCode.OK,
+                    Data = itemResponse,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse<Forecast>()
+                {
+                    Message = $"[GetItemByCityName] : {ex.Message}",
+                    HttpCode = HttpStatusCode.InternalServerError,
+                };
+            }
+        }
+
+        public async Task<IDefaultResponse<Forecast>> GetItemByCityCoord(SearchForecastByGeoViewModel model)
+        {
+            try
+            {
+                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.city.coord.lat == model.Lat && x.city.coord.lon == model.Lon && x.DeleteAt != null);
+
+                if (itemResponse == null)
+                {
+                    return new DefaultResponse<Forecast>()
+                    {
+                        HttpCode = HttpStatusCode.NotFound,
+                        Message = DefaultMessage.NotFound,
+                    };
+                }
+
+                return new DefaultResponse<Forecast>()
+                {
+                    HttpCode = HttpStatusCode.OK,
+                    Data = itemResponse,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse<Forecast>()
+                {
+                    Message = $"[GetItemByCityCoord] : {ex.Message}",
+                    HttpCode = HttpStatusCode.InternalServerError,
+                };
+            }
+        }
+
+        public async Task<IDefaultResponse<Forecast>> GetItemByCityId(int cityId)
+        {
+            try
+            {
+                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.city.id == cityId && x.DeleteAt != null);
+
+                if (itemResponse == null)
+                {
+                    return new DefaultResponse<Forecast>()
+                    {
+                        HttpCode = HttpStatusCode.NotFound,
+                        Message = DefaultMessage.NotFound,
+                    };
+                }
+
+                return new DefaultResponse<Forecast>()
+                {
+                    HttpCode = HttpStatusCode.OK,
+                    Data = itemResponse,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse<Forecast>()
+                {
+                    Message = $"[GetItemByCityId] : {ex.Message}",
                     HttpCode = HttpStatusCode.InternalServerError,
                 };
             }
