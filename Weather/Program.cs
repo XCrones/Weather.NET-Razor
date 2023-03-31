@@ -1,7 +1,13 @@
+using Weather.Properties;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+Settings.InitConfigs(builder);
+Settings.InitDB(builder);
+Settings.InitRepositories(builder);
+Settings.InitServices(builder);
 
 var app = builder.Build();
 
