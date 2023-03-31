@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /Weather/appsettings.json
 /Weather/wwwroot/lib.7z
+/Weather/appsettings.Development.json
