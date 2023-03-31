@@ -12,6 +12,6 @@ namespace Weather.Services.Interfaces
 
         public Task<IDefaultResponse<CityWeather>> SearchByCityName(int UId, SearchForecastByNameViewModel model);
 
-        public Task<IDefaultResponse<CityWeather>> SearchByCityGeo(int UId, SearchForecastByGeoViewModel model);
+        public Task<IDefaultResponse<CityWeather>> SearchByCityCoord(int UId, SearchForecastByGeoViewModel model);
     }
 }
