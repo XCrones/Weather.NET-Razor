@@ -23,16 +23,48 @@ namespace Weather.Services.Implements
             _repository = repository;
         }
 
-        private async Task<ForecastUser?> GetListCities(int UId)
+        private async Task<ForecastUser?> GetForecastUser(int UId)
         {
             return await _repository.Read().FirstOrDefaultAsync(x => x.UId == UId);
         }
 
-        private async Task<IDefaultResponse<CityWeather>> CreateOrUpdateCitiesList(int UId, CityWeather model) 
+        private async Task<DefaultResponse<List<CityWeather>>> GetLitiesList(int UId, string? message, HttpStatusCode? code)
         {
             try
             {
-                var itemResponse = await GetListCities(UId);
+                var responseItems = await _repository.Read().FirstOrDefaultAsync(x => x.UId == UId);
+
+                if (responseItems == null)
+                {
+                    return new DefaultResponse<List<CityWeather>>()
+                    {
+                        HttpCode = HttpStatusCode.NotFound,
+                        Message = DefaultMessage.NotFound,
+                    };
+                }
+
+                return new DefaultResponse<List<CityWeather>>()
+                {
+                    HttpCode = code ?? HttpStatusCode.OK,
+                    Message = message ?? DefaultMessage.OK,
+                    Data = responseItems.Cities,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse<List<CityWeather>>()
+                {
+                    Message = $"[GetCities] : {ex.Message}",
+                    HttpCode = HttpStatusCode.InternalServerError,
+                };
+            }
+        }
+
+        private async Task<IDefaultResponse<List<CityWeather>>> CreateOrUpdateCitiesList(int UId, CityWeather model) 
+        {
+            try
+            {
+                var itemResponse = await GetForecastUser(UId);
 
                 if (itemResponse == null)
                 {
@@ -49,34 +81,14 @@ namespace Weather.Services.Implements
                     newItem.Cities.Add(model);
                     await _repository.Create(newItem);
 
-                    return new DefaultResponse<CityWeather>()
-                    {
-                        Data = new CityWeather()
-                        {
-                            id = model.id,
-                            country = model.country,
-                            name = model.name
-                        },
-                        HttpCode = HttpStatusCode.Created,
-                        Message = DefaultMessage.CreateSucces,
-                    };
+                    return await GetLitiesList(UId, DefaultMessage.CreateSucces, HttpStatusCode.Created);
                 }
 
                 var searchUniqCity = itemResponse.Cities.FirstOrDefault(x => x.id == model.id);
 
                 if (searchUniqCity != null)
                 {
-                    return new DefaultResponse<CityWeather>()
-                    {
-                        Data = new CityWeather()
-                        {
-                            id = model.id,
-                            country = model.country,
-                            name = model.name
-                        },
-                        HttpCode = HttpStatusCode.OK,
-                        Message = DefaultMessage.NoNeedToUpdate,
-                    };
+                    return await GetLitiesList(UId, DefaultMessage.NoNeedToUpdate, HttpStatusCode.OK);
                 }
 
                 itemResponse.Cities.Add(model);
@@ -84,21 +96,13 @@ namespace Weather.Services.Implements
 
                 await _repository.Update(itemResponse);
 
-                return new DefaultResponse<CityWeather>()
-                {
-                    Data = new CityWeather()
-                    {
-                        id = model.id,
-                        country = model.country,
-                        name = model.name
-                    },
-                    HttpCode = HttpStatusCode.OK,
-                    Message = DefaultMessage.UpdateSucces,
-                };
+                var responseCities = await GetForecastUser(UId);
+
+                return await GetLitiesList(UId, DefaultMessage.UpdateSucces, HttpStatusCode.OK);
             }
             catch (Exception ex)
             {
-                return new DefaultResponse<CityWeather>()
+                return new DefaultResponse<List<CityWeather>>()
                 {
                     Message = $"[GetCities] : {ex.Message}",
                     HttpCode = HttpStatusCode.InternalServerError,
@@ -106,7 +110,7 @@ namespace Weather.Services.Implements
             }
         }
 
-        private async Task<IDefaultResponse<CityWeather>> CreateOrUpdateForecast(int UId, ForecastViewModel model)
+        private async Task<IDefaultResponse<List<CityWeather>>> CreateOrUpdateForecast(int UId, ForecastViewModel model)
         {
             try
             {
@@ -133,7 +137,7 @@ namespace Weather.Services.Implements
 
                 if (responseCreate.HttpCode != HttpStatusCode.OK || responseCreate.Data == null)
                 {
-                    return new DefaultResponse<CityWeather>()
+                    return new DefaultResponse<List<CityWeather>>()
                     {
                         HttpCode = HttpStatusCode.InternalServerError,
                         Message = DefaultMessage.ErrorSave
@@ -150,7 +154,7 @@ namespace Weather.Services.Implements
                 return await CreateOrUpdateCitiesList(UId, newItem);
             } catch (Exception ex)
             {
-                return new DefaultResponse<CityWeather>()
+                return new DefaultResponse<List<CityWeather>>()
                 {
                     Message = $"[GetCities] : {ex.Message}",
                     HttpCode = HttpStatusCode.InternalServerError,
@@ -162,7 +166,7 @@ namespace Weather.Services.Implements
         {
             try
             {
-                var itemResponse = await GetListCities(UId);
+                var itemResponse = await GetForecastUser(UId);
 
                 if (itemResponse == null)
                 {
@@ -204,7 +208,7 @@ namespace Weather.Services.Implements
         {
             try
             {
-                var itemResponse = await GetListCities(UId);
+                var itemResponse = await GetForecastUser(UId);
 
                 if (itemResponse == null)
                 {
@@ -247,7 +251,7 @@ namespace Weather.Services.Implements
             }
         }
 
-        public async Task<IDefaultResponse<CityWeather>> SearchByCityCoord(int UId, SearchForecastByGeoViewModel model, string _apiKey)
+        public async Task<IDefaultResponse<List<CityWeather>>> SearchByCityCoord(int UId, SearchForecastByGeoViewModel model, string _apiKey)
         {
             try
             {
@@ -255,7 +259,7 @@ namespace Weather.Services.Implements
 
                 if (itemResponse.HttpCode == HttpStatusCode.InternalServerError)
                 {
-                    return new DefaultResponse<CityWeather>()
+                    return new DefaultResponse<List<CityWeather>>()
                     {
                         HttpCode = HttpStatusCode.InternalServerError,
                         Message = itemResponse.Message,
@@ -281,7 +285,7 @@ namespace Weather.Services.Implements
 
                 if (fetchForecast == null || fetchForecast.HttpCode != HttpStatusCode.OK || fetchForecast.Data == null)
                 {
-                    return new DefaultResponse<CityWeather>()
+                    return new DefaultResponse<List<CityWeather>>()
                     {
                         HttpCode = HttpStatusCode.BadRequest,
                         Message = DefaultMessage.CityNotFound,
@@ -292,7 +296,7 @@ namespace Weather.Services.Implements
             }
             catch (Exception ex)
             {
-                return new DefaultResponse<CityWeather>()
+                return new DefaultResponse<List<CityWeather>>()
                 {
                     Message = $"[GetCities] : {ex.Message}",
                     HttpCode = HttpStatusCode.InternalServerError,
@@ -300,7 +304,7 @@ namespace Weather.Services.Implements
             }
         }
 
-        public async Task<IDefaultResponse<CityWeather>> SearchByCityName(int UId, SearchForecastByNameViewModel model, string _apiKey)
+        public async Task<IDefaultResponse<List<CityWeather>>> SearchByCityName(int UId, SearchForecastByNameViewModel model, string _apiKey)
         {
             try
             {
@@ -308,7 +312,7 @@ namespace Weather.Services.Implements
 
                 if (itemResponse.HttpCode == HttpStatusCode.InternalServerError)
                 {
-                    return new DefaultResponse<CityWeather>()
+                    return new DefaultResponse<List<CityWeather>>()
                     {
                         HttpCode = HttpStatusCode.InternalServerError,
                         Message = itemResponse.Message,
@@ -334,7 +338,7 @@ namespace Weather.Services.Implements
 
                 if (fetchForecast == null || fetchForecast.HttpCode != HttpStatusCode.OK || fetchForecast.Data == null)
                 {
-                    return new DefaultResponse<CityWeather>()
+                    return new DefaultResponse<List<CityWeather>>()
                     {
                         HttpCode = HttpStatusCode.BadRequest,
                         Message = DefaultMessage.CityNotFound,
@@ -345,7 +349,7 @@ namespace Weather.Services.Implements
             }
             catch (Exception ex)
             {
-                return new DefaultResponse<CityWeather>()
+                return new DefaultResponse<List<CityWeather>>()
                 {
                     Message = $"[GetCities] : {ex.Message}",
                     HttpCode = HttpStatusCode.InternalServerError,

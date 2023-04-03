@@ -10,8 +10,8 @@ namespace Weather.Services.Interfaces
 
         public Task<IDefaultResponse<bool>> RemoveItem(int UId, int cityId);
 
-        public Task<IDefaultResponse<CityWeather>> SearchByCityName(int UId, SearchForecastByNameViewModel model, string _apiKey);
+        public Task<IDefaultResponse<List<CityWeather>>> SearchByCityName(int UId, SearchForecastByNameViewModel model, string _apiKey);
 
-        public Task<IDefaultResponse<CityWeather>> SearchByCityCoord(int UId, SearchForecastByGeoViewModel model,  string _apiKey);
+        public Task<IDefaultResponse<List<CityWeather>>> SearchByCityCoord(int UId, SearchForecastByGeoViewModel model,  string _apiKey);
     }
 }
