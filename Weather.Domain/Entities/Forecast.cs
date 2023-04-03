@@ -10,9 +10,6 @@ namespace Weather.Domain.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Column("cnt")]
-        public int cnt { get; set; }
-
         [Column("list", TypeName = "jsonb")]
         public List<WeatherItem> list { get; set; }
 
