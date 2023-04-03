@@ -14,8 +14,8 @@ using Weather.Domain.Entities;
 namespace Weather.DAL.Migrations
 {
     [DbContext(typeof(AppContextDb))]
-    [Migration("20230331211339_InitCreate")]
-    partial class InitCreate
+    [Migration("20230403084542_ForecastRmCnt")]
+    partial class ForecastRmCnt
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -52,10 +52,6 @@ namespace Weather.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("city");
-
-                    b.Property<int>("cnt")
-                        .HasColumnType("integer")
-                        .HasColumnName("cnt");
 
                     b.Property<List<WeatherItem>>("list")
                         .IsRequired()

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Weather.DAL;
@@ -13,9 +14,11 @@ using Weather.Domain.Entities;
 namespace Weather.DAL.Migrations
 {
     [DbContext(typeof(AppContextDb))]
-    partial class AppContextDbModelSnapshot : ModelSnapshot
+    [Migration("20230403080644_InitCreate")]
+    partial class InitCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,6 +52,10 @@ namespace Weather.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("city");
+
+                    b.Property<int>("cnt")
+                        .HasColumnType("integer")
+                        .HasColumnName("cnt");
 
                     b.Property<List<WeatherItem>>("list")
                         .IsRequired()
