@@ -1,4 +1,6 @@
-﻿namespace Weather.Domain.Messages
+﻿using System.Security;
+
+namespace Weather.Domain.Messages
 {
     public static class DefaultMessage
     {
@@ -27,5 +29,7 @@
         public static readonly string NoNeedToUpdate = "No need to update";
 
         public static readonly string CityNotFound = "City not found";
+
+        public static readonly string OK = "Ok";
     }
 }
