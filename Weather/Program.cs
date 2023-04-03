@@ -9,6 +9,9 @@ Settings.InitDB(builder);
 Settings.InitRepositories(builder);
 Settings.InitServices(builder);
 
+builder.Services.AddRouting(options => options.LowercaseUrls = true);
+builder.Services.AddRouting(options => options.LowercaseQueryStrings = true);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
