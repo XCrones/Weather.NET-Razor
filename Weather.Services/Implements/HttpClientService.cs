@@ -14,8 +14,11 @@ namespace Weather.Services.Implements
 
         public async Task<TD?> Get<TD>(string url)
         {
-            HttpClient client = new HttpClient();
-            HttpResponseMessage response = client.GetAsync(url).Result;
+            HttpClient httpClient = new() 
+            {
+                Timeout = TimeSpan.FromSeconds(5),
+            };
+            HttpResponseMessage response = httpClient.GetAsync(url).Result;
             var content = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<TD>(content, _options);
         }
