@@ -23,48 +23,113 @@ namespace Weather.Services.Implements
             _repository = repository;
         }
 
-        private async Task<ForecastUser?> GetForecastUser(int UId)
+        private async Task<ForecastUser?> GetListCities(int UId)
         {
             return await _repository.Read().FirstOrDefaultAsync(x => x.UId == UId);
         }
 
-        private async Task<IDefaultResponse<CityWeather>> CreateOrUpdateForecast(IDefaultResponse<ForecastViewModel>? fetchForecast)
+        private async Task<IDefaultResponse<CityWeather>> CreateOrUpdateCitiesList(int UId, CityWeather model) 
         {
             try
             {
-                if (fetchForecast == null || fetchForecast.HttpCode != HttpStatusCode.OK || fetchForecast.Data == null)
+                var itemResponse = await GetListCities(UId);
+
+                if (itemResponse == null)
                 {
+                    DateTime timeStamp = DateTime.UtcNow;
+
+                    ForecastUser newItem = new()
+                    {
+                        UId = UId,
+                        Cities = new List<CityWeather>(),
+                        CreatedAt = timeStamp,
+                        UpdatedAt = timeStamp,
+                    };
+
+                    newItem.Cities.Add(model);
+                    await _repository.Create(newItem);
+
                     return new DefaultResponse<CityWeather>()
                     {
-                        HttpCode = HttpStatusCode.BadRequest,
-                        Message = DefaultMessage.CityNotFound,
+                        Data = new CityWeather()
+                        {
+                            id = model.id,
+                            country = model.country,
+                            name = model.name
+                        },
+                        HttpCode = HttpStatusCode.Created,
+                        Message = DefaultMessage.CreateSucces,
                     };
                 }
 
+                var searchUniqCity = itemResponse.Cities.FirstOrDefault(x => x.id == model.id);
 
-                var uniqForecast = await _forecastService.GetItemByCityId(fetchForecast.Data.city.id);
+                if (searchUniqCity != null)
+                {
+                    return new DefaultResponse<CityWeather>()
+                    {
+                        Data = new CityWeather()
+                        {
+                            id = model.id,
+                            country = model.country,
+                            name = model.name
+                        },
+                        HttpCode = HttpStatusCode.OK,
+                        Message = DefaultMessage.NoNeedToUpdate,
+                    };
+                }
+
+                itemResponse.Cities.Add(model);
+                itemResponse.UpdatedAt = DateTime.UtcNow;
+
+                await _repository.Update(itemResponse);
+
+                return new DefaultResponse<CityWeather>()
+                {
+                    Data = new CityWeather()
+                    {
+                        id = model.id,
+                        country = model.country,
+                        name = model.name
+                    },
+                    HttpCode = HttpStatusCode.OK,
+                    Message = DefaultMessage.UpdateSucces,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new DefaultResponse<CityWeather>()
+                {
+                    Message = $"[GetCities] : {ex.Message}",
+                    HttpCode = HttpStatusCode.InternalServerError,
+                };
+            }
+        }
+
+        private async Task<IDefaultResponse<CityWeather>> CreateOrUpdateForecast(int UId, ForecastViewModel model)
+        {
+            try
+            {
+                var uniqForecast = await _forecastService.GetItemByCityId(model.city.id);
 
                 if (uniqForecast.HttpCode == HttpStatusCode.OK && uniqForecast.Data != null)
                 {
-                    var itemUpdate = await _forecastService.UpdateItem(uniqForecast.Data.Id, fetchForecast.Data);
+                    var itemUpdate = await _forecastService.UpdateItem(uniqForecast.Data.Id, model);
 
                     if (itemUpdate.HttpCode == HttpStatusCode.OK && itemUpdate.Data != null)
                     {
-                        return new DefaultResponse<CityWeather>()
+                        var itemCityList = new CityWeather()
                         {
-                            HttpCode = HttpStatusCode.OK,
-                            Message = DefaultMessage.UpdateSucces,
-                            Data = new CityWeather()
-                            {
-                                country = itemUpdate.Data.city.country,
-                                name = itemUpdate.Data.city.name,
-                                id = itemUpdate.Data.Id,
-                            }
+                            country = itemUpdate.Data.city.country,
+                            name = itemUpdate.Data.city.name,
+                            id = itemUpdate.Data.Id
                         };
+
+                        return await CreateOrUpdateCitiesList(UId, itemCityList);
                     }
                 }
 
-                var responseCreate = await _forecastService.CreateItem(fetchForecast.Data);
+                var responseCreate = await _forecastService.CreateItem(model);
 
                 if (responseCreate.HttpCode != HttpStatusCode.OK || responseCreate.Data == null)
                 {
@@ -75,17 +140,14 @@ namespace Weather.Services.Implements
                     };
                 }
 
-                return new DefaultResponse<CityWeather>()
+                var newItem = new CityWeather()
                 {
-                    HttpCode = HttpStatusCode.OK,
-                    Message = DefaultMessage.CreateSucces,
-                    Data = new CityWeather()
-                    {
-                        country = responseCreate.Data.city.country,
-                        name = responseCreate.Data.city.name,
-                        id = responseCreate.Data.Id
-                    }
+                    country = responseCreate.Data.city.country,
+                    name = responseCreate.Data.city.name,
+                    id = responseCreate.Data.Id
                 };
+
+                return await CreateOrUpdateCitiesList(UId, newItem);
             } catch (Exception ex)
             {
                 return new DefaultResponse<CityWeather>()
@@ -100,7 +162,7 @@ namespace Weather.Services.Implements
         {
             try
             {
-                var itemResponse = await GetForecastUser(UId);
+                var itemResponse = await GetListCities(UId);
 
                 if (itemResponse == null)
                 {
@@ -142,7 +204,7 @@ namespace Weather.Services.Implements
         {
             try
             {
-                var itemResponse = await GetForecastUser(UId);
+                var itemResponse = await GetListCities(UId);
 
                 if (itemResponse == null)
                 {
@@ -204,22 +266,29 @@ namespace Weather.Services.Implements
                 {
                     if (itemResponse.Data.UpdatedAt.AddHours(1) > DateTime.UtcNow)
                     {
-                        return new DefaultResponse<CityWeather>()
+                        var itemCityList = new CityWeather()
                         {
-                            HttpCode = HttpStatusCode.OK,
-                            Message = DefaultMessage.NoNeedToUpdate,
-                            Data = new CityWeather()
-                            {
-                                country = itemResponse.Data.city.country,
-                                name = itemResponse.Data.city.name,
-                                id = itemResponse.Data.Id,
-                            }
+                            country = itemResponse.Data.city.country,
+                            name = itemResponse.Data.city.name,
+                            id = itemResponse.Data.Id
                         };
+
+                        return await CreateOrUpdateCitiesList(UId, itemCityList);
                     }
                 }
 
                 var fetchForecast = await _openWeatherService.FetchByGeo(model, _apiKey);
-                return await CreateOrUpdateForecast(fetchForecast);
+
+                if (fetchForecast == null || fetchForecast.HttpCode != HttpStatusCode.OK || fetchForecast.Data == null)
+                {
+                    return new DefaultResponse<CityWeather>()
+                    {
+                        HttpCode = HttpStatusCode.BadRequest,
+                        Message = DefaultMessage.CityNotFound,
+                    };
+                }
+
+                return await CreateOrUpdateForecast(UId, fetchForecast.Data);
             }
             catch (Exception ex)
             {
@@ -250,22 +319,29 @@ namespace Weather.Services.Implements
                 {
                     if (itemResponse.Data.UpdatedAt.AddHours(1) > DateTime.UtcNow)
                     {
-                        return new DefaultResponse<CityWeather>()
+                        var itemCityList = new CityWeather()
                         {
-                            HttpCode = HttpStatusCode.OK,
-                            Message = DefaultMessage.NoNeedToUpdate,
-                            Data = new CityWeather()
-                            {
-                                country = itemResponse.Data.city.country,
-                                name = itemResponse.Data.city.name,
-                                id = itemResponse.Data.Id,
-                            }
+                            country = itemResponse.Data.city.country,
+                            name = itemResponse.Data.city.name,
+                            id = itemResponse.Data.Id
                         };
+
+                        return await CreateOrUpdateCitiesList(UId, itemCityList);
                     }
                 }
 
                 var fetchForecast = await _openWeatherService.FetchByName(model, _apiKey);
-                return await CreateOrUpdateForecast(fetchForecast);
+
+                if (fetchForecast == null || fetchForecast.HttpCode != HttpStatusCode.OK || fetchForecast.Data == null)
+                {
+                    return new DefaultResponse<CityWeather>()
+                    {
+                        HttpCode = HttpStatusCode.BadRequest,
+                        Message = DefaultMessage.CityNotFound,
+                    };
+                }
+
+                return await CreateOrUpdateForecast(UId, fetchForecast.Data);
             }
             catch (Exception ex)
             {
