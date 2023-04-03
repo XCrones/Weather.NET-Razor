@@ -14,14 +14,21 @@ namespace Weather.Services.Implements
     {
         private readonly IForecastRepository _repository;
 
-        public ForecastService(IForecastRepository forecastRepository, IOpenWeatherService openWeatherService)
+        public ForecastService(IForecastRepository forecastRepository)
         {
             _repository = forecastRepository;
         }
 
         private async Task<Forecast?> GetForecastById(int id)
         {
-            return await _repository.Read().FirstOrDefaultAsync(x => x.Id == id && x.DeleteAt != null);
+            return await _repository.Read().FirstOrDefaultAsync(x => x.Id == id && x.DeleteAt == null);
+        }
+
+        private async Task<Forecast?> SearchByNameCity(string cityName)
+        {
+            var subName = cityName.Substring(1).ToLower();
+            var nameCapitalize = $"{char.ToUpper(cityName[0])}{subName}";
+            return  await _repository.Read().FirstOrDefaultAsync(x => x.city.name == nameCapitalize.Trim() && x.DeleteAt == null);
         }
 
         public async Task<IDefaultResponse<Forecast>> CreateItem(ForecastViewModel model)
@@ -30,9 +37,8 @@ namespace Weather.Services.Implements
             {
                 DateTime timeStamp = DateTime.UtcNow;
 
-                Forecast newItem = new Forecast()
+                Forecast newItem = new()
                 {
-                    cnt = model.cnt,
                     list = model.list,
                     city = model.city,
                     CreatedAt = timeStamp,
@@ -175,7 +181,6 @@ namespace Weather.Services.Implements
 
                 itemResponse.UpdatedAt = DateTime.UtcNow;
                 itemResponse.city = model.city;
-                itemResponse.cnt = model.cnt;
                 itemResponse.list = model.list;
 
                 var responseUpdate = await _repository.Update(itemResponse);
@@ -209,10 +214,7 @@ namespace Weather.Services.Implements
         {
             try
             {
-                var subName = model.CityName.Substring(1).ToLower();
-                var nameCapitalize = $"{char.ToUpper(model.CityName[0])}{subName}";
-
-                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.city.name == nameCapitalize && x.DeleteAt != null);
+                var itemResponse = await SearchByNameCity(model.CityName);
 
                 if (itemResponse == null)
                 {
@@ -243,7 +245,7 @@ namespace Weather.Services.Implements
         {
             try
             {
-                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.city.coord.lat == model.Lat && x.city.coord.lon == model.Lon && x.DeleteAt != null);
+                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.city.coord.lat == model.Lat && x.city.coord.lon == model.Lon && x.DeleteAt == null);
 
                 if (itemResponse == null)
                 {
@@ -274,7 +276,7 @@ namespace Weather.Services.Implements
         {
             try
             {
-                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.city.id == cityId && x.DeleteAt != null);
+                var itemResponse = await _repository.Read().FirstOrDefaultAsync(x => x.city.id == cityId && x.DeleteAt == null);
 
                 if (itemResponse == null)
                 {
